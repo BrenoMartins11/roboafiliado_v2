@@ -1,0 +1,51 @@
+#  SEGURANÇA E CREDENCIAIS (NUNCA VERSIONAR)
+.env
+.env.*
+!.env.example
+config/cookie.txt
+# Sessão do navegador (login, cookies e cache do Chrome/Playwright)
+config/ml_session/
+ml_session/
+
+
+
+#  LOGS, BANCO DE DADOS E ARQUIVOS DE DEBUG
+logs/
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# Imagens de diagnóstico do Playwright
+debug_*.png
+*.png
+*.jpg
+*.jpeg
+
+# Scripts de testes temporários
+teste.py
+diagnostico_*.py
+login_ml.py
+teste_produtos_logados.py
+
+#  PYTHON & AMBIENTE VIRTUAL
+
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+
+#  CONFIGURAÇÕES DE IDE
+
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

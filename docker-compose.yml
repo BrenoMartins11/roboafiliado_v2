@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  # Container do Banco de Dados PostgreSQL (escuta na 5433 no seu Windows)
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_afiliados
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-robo_afiliados}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata_afiliados:/var/lib/postgresql/data
+    networks:
+      - rede_afiliados
+
+  # Container do Robô de Afiliados
+  robo:
+    build: .
+    container_name: robo_afiliados_app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+    volumes:
+      - ./:/app
+    depends_on:
+      - postgres
+    networks:
+      - rede_afiliados
+
+volumes:
+  pgdata_afiliados:
+    driver: local
+
+networks:
+  rede_afiliados:
+    driver: bridge

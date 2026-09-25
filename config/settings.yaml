@@ -1,0 +1,127 @@
+# ============================================================
+#  CONFIGURAÇÕES DO ROBÔ DE AFILIADOS (MULTI-NICHO)
+# ============================================================
+
+mercadolivre:
+  site_id: "MLB"
+  affiliate_tag: "eriklica"  # Sua tag/nickname de afiliado
+
+# ============================================================
+#  5 NICHOS ESPECÍFICOS -> GRUPOS NO TELEGRAM & WHATSAPP
+# ============================================================
+nichos:
+  - id: "smartphones"
+    nome: "Smartphones & Acessórios"
+    categoria_id: "MLB1051"
+    telegram_chat_id: "-1003913596243" #ofertas Breno
+    whatsapp_group_id: "120363411874042187@g.us" # Ofertas Tech (nome do grupo no whatssapp)
+    filtros:
+      preco_minimo: 150.00
+      desconto_minimo: 15
+
+  - id: "informatica"
+    nome: "Informática & PC Gamer"
+    categoria_id: "MLB1648"
+    telegram_chat_id: "-5115049910" #Promocoes Tech
+    whatsapp_group_id: "120363412413124169@g.us" # Mercado Livre (nome do grupo no whatssapp)
+    filtros:
+      preco_minimo: 100.00
+      desconto_minimo: 15
+
+  - id: "casa_eletro"
+    nome: "Casa & Eletrodomésticos"
+    categoria_id: "MLB5726"
+    telegram_chat_id: "-5423094106" #Promocoes itens de Casa
+    whatsapp_group_id: "120363000000000003@g.us"
+    filtros:
+      preco_minimo: 60.00
+      desconto_minimo: 20
+
+  - id: "games_consoles"
+    nome: "Games & Consoles"
+    categoria_id: "MLB1144"
+    telegram_chat_id: "-5298817279" # Promocoes Games
+    whatsapp_group_id: "120363000000000004@g.us"
+    filtros:
+      preco_minimo: 80.00
+      desconto_minimo: 15
+
+  - id: "ferramentas"
+    nome: "Ferramentas & Construção"
+    categoria_id: "MLB1500"
+    telegram_chat_id: "-5553770332" # Promocoes Ferramentas
+    whatsapp_group_id: "120363000000000005@g.us"
+    filtros:
+      preco_minimo: 50.00
+      desconto_minimo: 20
+
+# ============================================================
+#  FILTROS GERAIS (Fallback se não definido no nicho)
+# ============================================================
+filtros_gerais:
+  preco_minimo: 40.00
+  preco_maximo: 8000.00
+  avaliacao_minima: 4.0
+  minimo_avaliacoes: 10
+  desconto_minimo: 10
+  frete_gratis: false
+  palavras_obrigatorias: []
+  palavras_bloqueadas:
+    - "usado"
+    - "seminovo"
+    - "recondicionado"
+    - "defeito"
+    - "peças"
+  limite_produtos_por_nicho: 3
+
+# ============================================================
+#  TEMPLATES DE MENSAGEM
+# ============================================================
+mensagem:
+  whatsapp_template: |
+    🔥 *{nome}*
+
+    💰 De: ~R$ {preco_original}~
+    💥 *Por: R$ {preco}* ({desconto}% OFF)
+    {frete_gratis}
+    ⭐ {avaliacao} ({total_avaliacoes} avaliações)
+
+    🛒 *Compre com desconto aqui:*
+    {link}
+
+  telegram_template: |
+    🔥 *{nome}*
+
+    💰 De: ~R$ {preco_original}~
+    💥 *Por: R$ {preco}* ({desconto}% OFF)
+    {frete_gratis}
+    ⭐ {avaliacao} ({total_avaliacoes} avaliações)
+
+    🛒 [CLIQUE AQUI PARA COMPRAR]({link})
+
+  frete_gratis_texto: "🚚 ✅ Frete Grátis!"
+  frete_pago_texto: ""
+
+# ============================================================
+#  AGENDAMENTO (Execução a cada 2 horas)
+# ============================================================
+agendamento:
+  intervalo_minutos: 120
+  variacao_minutos: 10
+  horario_inicio: "08:00"
+  horario_fim: "22:30"
+  intervalo_entre_mensagens_seg: 60
+  intervalo_entre_nichos_seg: 80
+
+# ============================================================
+#  BANCO DE DADOS E HISTÓRICO
+# ============================================================
+banco_dados:
+  dias_para_reenviar: 7
+
+# ============================================================
+#  LOGS
+# ============================================================
+logging:
+  level: "INFO"
+  arquivo: "logs/robo.log"
