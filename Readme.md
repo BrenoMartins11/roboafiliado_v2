@@ -42,10 +42,10 @@ Preencha com seus dados locais:
 ```env
 # Banco de Dados (PostgreSQL)
 DB_HOST=localhost            # Ou 'postgres' se rodar o robô dentro do docker-compose
-DB_PORT=5432
-DB_USER=postgres
+DB_PORT=numero_da_sua_porta
+DB_USER=nome_do_usuario_do_seu_banco
 DB_PASSWORD=sua_senha_aqui
-DB_NAME=robo_afiliados
+DB_NAME=nome_do_seu_robo
 
 # Telegram
 TELEGRAM_TOKEN=seu_bot_token_do_botfather
