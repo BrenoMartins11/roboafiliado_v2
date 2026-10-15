@@ -1,7 +1,7 @@
 """
 main.py
-Ponto de entrada do robô de divulgação de afiliados Mercado Livre (Multi-Nicho).
-Orquestra: Coleta por Nicho -> Filtro -> Formatação -> Envio (Telegram/WhatsApp) -> PostgreSQL -> Agendamento (2h).
+Ponto de entrada do robô de afiliados Mercado Livre (Multi-Nicho).
+Orquestra: Coleta por Nicho -> Filtro -> Checagem de Banco -> Geração de Link -> Disparo (Telegram/WhatsApp).
 """
 
 import os
@@ -14,7 +14,6 @@ from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Carrega variáveis do arquivo .env antes de qualquer módulo
 load_dotenv()
 
 from src.collector import MercadoLivreCollector
@@ -24,10 +23,6 @@ from src.formatter import MessageFormatter
 from src.database  import Database
 from src.senders   import TelegramSender, WhatsAppSender
 
-
-# ============================================================
-#  CONFIGURAÇÃO DE LOGGING
-# ============================================================
 
 def setup_logging(config: dict):
     log_cfg = config.get("logging", {})
@@ -48,20 +43,12 @@ def setup_logging(config: dict):
 logger = logging.getLogger("RoboAfiliados")
 
 
-# ============================================================
-#  CARREGAMENTO DA CONFIGURAÇÃO
-# ============================================================
-
 def carregar_config(path: str = "config/settings.yaml") -> dict:
     if not os.path.exists(path):
         raise FileNotFoundError(f"Arquivo de configuração não encontrado: {path}")
     with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
-
-# ============================================================
-#  CICLO PRINCIPAL (POR NICHO)
-# ============================================================
 
 def executar_ciclo(
     collector:  MercadoLivreCollector,
@@ -73,7 +60,6 @@ def executar_ciclo(
     whatsapp:   WhatsAppSender,
     config:     dict,
 ):
-    """Executa um ciclo completo iterando pelos 5 nichos configurados."""
     logger.info("=" * 65)
     logger.info(f"Iniciando ciclo multi-nicho: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
 
@@ -82,13 +68,8 @@ def executar_ciclo(
         logger.warning("Nenhum nicho configurado no settings.yaml.")
         return
 
-    intervalo_msg = config.get("agendamento", {}).get("intervalo_entre_mensagens_seg", 25)
-    intervalo_nichos = config.get("agendamento", {}).get("intervalo_entre_nichos_seg", 40)
-
-    # Verifica conexão da Evolution API uma vez antes do ciclo
-    wa_online = whatsapp.instancia_conectada()
-    if not wa_online:
-        logger.warning("⚠️  Instância da Evolution API não está conectada/aberta. Envios do WhatsApp podem falhar.")
+    intervalo_msg = config.get("agendamento", {}).get("intervalo_entre_mensagens_seg", 20)
+    intervalo_nichos = config.get("agendamento", {}).get("intervalo_entre_nichos_seg", 30)
 
     total_enviados_ciclo = 0
 
@@ -101,67 +82,75 @@ def executar_ciclo(
 
         logger.info(f"\n[{idx}/{len(nichos)}] Processando Nicho: {nicho_nome} (Cat: {cat_id})")
 
-        # 1. Coleta específica do nicho
+        # 1. Coleta específica do nicho via Playwright
         filtros_combinados = filtro.mesclar_filtros(nicho)
-        produtos = collector.buscar_produtos_nicho(cat_id, filtros_combinados)
+        produtos = collector.buscar_produtos_nicho(
+            cat_id, filtros_combinados, nicho
+        )
 
-        # 2. Filtragem e ranqueamento
+        # 2. Filtragem dos melhores produtos
         produtos_aprovados = filtro.filtrar(produtos, nicho)
 
         if not produtos_aprovados:
             logger.info(f"Nenhum produto aprovado para o nicho '{nicho_nome}'.")
             continue
 
-        # 3. Envio dos produtos aprovados para os respectivos grupos
+        # 3. Itera sobre os produtos aprovados
         for p in produtos_aprovados:
             prod_id = p["id"]
+
+            # ============================================================
+            #  CHECAGEM PRÉVIA NO BANCO ANTES DE GERAR O LINK
+            # ============================================================
+            ja_foi_telegram = db.ja_enviado(prod_id, tg_chat, "telegram") if tg_chat else True
+            ja_foi_whatsapp = db.ja_enviado(prod_id, wa_group, "whatsapp") if wa_group else True
+
+            # Se já foi postado em ambos os canais, pula sem perder tempo gerando link
+            if ja_foi_telegram and ja_foi_whatsapp:
+                logger.info(f"⏭️  Pulando [{prod_id}] {p['nome'][:35]}... (já enviado recentemente nos últimos 7 dias)")
+                continue
+
+            # Se precisa ser enviado, agora sim gera o link oficial via Playwright
+            logger.info(f"⏳ Gerando link de afiliado para: {p['nome'][:40]}...")
             link_afiliado = affiliate.gerar_link_afiliado(p["link"])
 
-            # Formatações específicas para cada plataforma
+            # Formata as mensagens
             msg_telegram = formatter.formatar_telegram(p, link_afiliado)
             msg_whatsapp = formatter.formatar_whatsapp(p, link_afiliado)
 
             enviou_em_algum = False
 
-            # --- Telegram ---
-            if tg_chat:
-                if db.ja_enviado(prod_id, tg_chat, "telegram"):
-                    logger.debug(f"Pulando Telegram (já enviado): {prod_id}")
+            # --- Disparo Telegram ---
+            if tg_chat and not ja_foi_telegram:
+                sucesso_tg = telegram.enviar_para_chat_sync(tg_chat, p, msg_telegram)
+                if sucesso_tg:
+                    db.registrar(prod_id, tg_chat, "telegram", nicho_id)
+                    enviou_em_algum = True
                 else:
-                    sucesso_tg = telegram.enviar_para_chat_sync(tg_chat, p, msg_telegram)
-                    if sucesso_tg:
-                        db.registrar(prod_id, tg_chat, "telegram", nicho_id)
-                        enviou_em_algum = True
+                    logger.warning(f"⚠️ Telegram falhou ao postar o produto {prod_id}")
 
-            # --- WhatsApp ---
-            if wa_group:
-                if db.ja_enviado(prod_id, wa_group, "whatsapp"):
-                    logger.debug(f"Pulando WhatsApp (já enviado): {prod_id}")
+            # --- Disparo WhatsApp ---
+            if wa_group and not ja_foi_whatsapp:
+                sucesso_wa = whatsapp.enviar_para_grupo(wa_group, p, msg_whatsapp)
+                if sucesso_wa:
+                    db.registrar(prod_id, wa_group, "whatsapp", nicho_id)
+                    enviou_em_algum = True
                 else:
-                    sucesso_wa = whatsapp.enviar_para_grupo(wa_group, p, msg_whatsapp)
-                    if sucesso_wa:
-                        db.registrar(prod_id, wa_group, "whatsapp", nicho_id)
-                        enviou_em_algum = True
+                    logger.warning(f"⚠️ WhatsApp falhou ao postar o produto {prod_id}")
 
             if enviou_em_algum:
                 total_enviados_ciclo += 1
-                pausa = intervalo_msg + random.randint(-4, 4)
+                pausa = intervalo_msg + random.randint(-5, 10)
                 logger.debug(f"Pausa anti-spam entre mensagens: {max(pausa, 5)}s")
-                time.sleep(max(pausa, 5))
+                time.sleep(pausa)
 
-        # Pausa entre nichos para diluir o tráfego
         if idx < len(nichos):
             time.sleep(max(intervalo_nichos, 10))
 
-    # Estatísticas no PostgreSQL
     stats = db.estatisticas()
-    logger.info(f"\n Ciclo concluído. Produtos enviados neste ciclo: {total_enviados_ciclo}")
+    logger.info(f"\n🏁 Ciclo concluído. Produtos enviados neste ciclo: {total_enviados_ciclo}")
     logger.info(f"📊 Estatísticas últimos 7 dias: Total={stats.get('total_7d')} | Plataformas={stats.get('por_plataforma')}")
 
-
-# ============================================================
-#  HORÁRIO DE OPERAÇÃO
-# ============================================================
 
 def dentro_do_horario(config: dict) -> bool:
     agora  = datetime.now().strftime("%H:%M")
@@ -169,10 +158,6 @@ def dentro_do_horario(config: dict) -> bool:
     fim    = config.get("agendamento", {}).get("horario_fim", "22:30")
     return inicio <= agora <= fim
 
-
-# ============================================================
-#  LOOP PRINCIPAL
-# ============================================================
 
 def main():
     config = carregar_config()
@@ -184,7 +169,6 @@ def main():
         db = Database(config)
     except Exception as e:
         logger.critical(f"Falha ao conectar ao banco PostgreSQL: {e}")
-        logger.critical("Verifique se o container Docker do Postgres está rodando e o arquivo .env está preenchido.")
         sys.exit(1)
 
     collector = MercadoLivreCollector(config)
@@ -194,7 +178,6 @@ def main():
     telegram  = TelegramSender(config)
     whatsapp  = WhatsAppSender(config)
 
-    # 120 minutos (2 horas)
     intervalo_base = config.get("agendamento", {}).get("intervalo_minutos", 120) * 60
     variacao       = config.get("agendamento", {}).get("variacao_minutos", 10) * 60
 
