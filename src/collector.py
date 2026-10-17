@@ -1,7 +1,7 @@
 """
-collector.py
-Coleta ofertas oficiais do Mercado Livre diretamente pelas categorias completas dos nichos
-utilizando o Playwright (navegador Chrome real).
+src/collector.py
+Coleta ofertas oficiais do Mercado Livre pelas categorias de cada nicho
+utilizando Playwright (compatível com Windows e VPS Linux) e BeautifulSoup.
 """
 
 import os
@@ -25,23 +25,30 @@ class MercadoLivreCollector:
             logger.warning("⚠️ Pasta de sessão 'config/ml_session' não encontrada.")
 
     def buscar_produtos_nicho(self, categoria_id: str, filtros: dict, nicho_config: Optional[dict] = None) -> list[dict]:
-        """Abre a página oficial de ofertas do nicho completo e extrai todos os produtos em promoção."""
-        if not categoria_id or categoria_id.lower() in ["geral", "todos", "ofertas"]:
+        """Abre a página oficial de ofertas do nicho e extrai todos os produtos em promoção."""
+        if not categoria_id or str(categoria_id).lower() in ["geral", "todos", "ofertas"]:
             url = OFERTAS_URL
             nome_log = "Ofertas Gerais"
         else:
             url = f"{OFERTAS_URL}?category={categoria_id}"
             nome_log = f"Nicho {categoria_id}"
 
+        # No Windows roda com Chrome real; na VPS Linux roda com o Chromium padrão do container
+        canal = "chrome" if os.name == "nt" else None
+        modo_headless = False if os.name == "nt" else True
+
         try:
             with sync_playwright() as p:
                 context = p.chromium.launch_persistent_context(
                     user_data_dir=str(self.session_dir),
-                    channel="chrome",
-                    headless=False,
+                    channel=canal,
+                    headless=modo_headless,
+                    viewport={"width": 1920, "height": 1080},
                     args=[
                         "--disable-blink-features=AutomationControlled",
-                        "--start-maximized"
+                        "--window-size=1920,1080",
+                        "--no-sandbox",
+                        "--disable-dev-shm-usage"
                     ],
                     ignore_default_args=["--enable-automation"],
                     locale="pt-BR"
@@ -50,11 +57,11 @@ class MercadoLivreCollector:
                 page = context.pages[0] if context.pages else context.new_page()
                 page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
-                logger.info(f"Navegando para o nicho completo: {nome_log} ({url})...")
+                logger.info(f"Navegando para: {nome_log} ({url})...")
                 page.goto(url, wait_until="domcontentloaded", timeout=30000)
                 page.wait_for_timeout(3000)
 
-                # Rola para baixo para carregar mais produtos do catálogo
+                # Rola a página para renderizar os produtos carregados via lazy-load
                 page.evaluate("window.scrollBy(0, 1000)")
                 page.wait_for_timeout(1000)
 

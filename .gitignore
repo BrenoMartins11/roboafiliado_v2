@@ -24,7 +24,7 @@ debug_*.png
 
 # Scripts de testes temporários
 teste.py
-diagnostico_*.py
+diagnostico_coleta.py
 login_ml.py
 teste_produtos_logados.py
 

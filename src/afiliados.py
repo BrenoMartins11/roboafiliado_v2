@@ -29,16 +29,22 @@ class AffiliateManager:
 
         try:
             with sync_playwright() as p:
+                canal = "chrome" if os.name == "nt" else None
+                modo_headless = False if os.name == "nt" else True
+
                 context = p.chromium.launch_persistent_context(
                     user_data_dir=str(self.session_dir),
-                    channel="chrome",
-                    headless=False,  # Janela real que garante a renderização do menu
+                    channel=canal,
+                    headless=modo_headless,
+                    viewport={"width": 1920, "height": 1080},
                     args=[
                         "--disable-blink-features=AutomationControlled",
-                        "--start-maximized"
+                        "--window-size=1920,1080",
+                        "--no-sandbox",
+                        "--disable-dev-shm-usage",
                     ],
                     ignore_default_args=["--enable-automation"],
-                    locale="pt-BR"
+                    locale="pt-BR",
                 )
 
                 page = context.pages[0] if context.pages else context.new_page()

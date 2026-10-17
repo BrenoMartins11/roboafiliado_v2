@@ -61,7 +61,7 @@ filtros_gerais:
     - "seminovo"
     - "recondicionado"
     - "defeito"
-  limite_produtos_por_nicho: 1       # <-- Aumenta de 3 para 8 produtos por lote
+  limite_produtos_por_nicho: 10       # <-- Aumenta de 3 para 8 produtos por lote
 
 # ============================================================
 #  AGENDAMENTO DA FILA
@@ -70,9 +70,9 @@ agendamento:
   intervalo_minutos: 25              # <-- Descanso de 25 min após terminar a fila para buscar novas ofertas
   variacao_minutos: 5
   horario_inicio: "08:00"
-  horario_fim: "22:30"
-  intervalo_entre_mensagens_seg: 60  # <-- Posta 1 produto a cada ~60 segundos (1 minuto)
-  intervalo_entre_nichos_seg: 30     # <-- Intervalo entre os nichos (30 segundos)
+  horario_fim: "22:00"
+  intervalo_entre_mensagens_seg: 10  # <-- Posta 1 produto a cada ~60 segundos (1 minuto)
+  intervalo_entre_nichos_seg: 10     # <-- Intervalo entre os nichos (30 segundos)
 
 # ============================================================
 #  TEMPLATES DE MENSAGEM
