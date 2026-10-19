@@ -44,7 +44,7 @@ Distribuição segmentada: Envia a foto oficial e a cópia formatada para o resp
                │     Moda / Informática)   │         └────────────────────────────────────┘
                └───────────────────────────┘
 ```
----
+
 # 🛠️ Tecnologias Utilizadas
 Componente	Tecnologia	Finalidade
 Linguagem	Python 3.11	Núcleo do robô, orquestração e regras de negócio
@@ -56,14 +56,14 @@ WhatsApp Gateway	Evolution API v2	Conexão persistente com WhatsApp Web via Bail
 Cache & Fila	Redis (Alpine)	Gestão de sessões e eventos da Evolution API
 Disparo Telegram	Telegram Bot API	Envio direto de mensagens com foto e legendas Markdown
 Orquestração	Docker & Docker Compose	Isolamento completo da stack em rede interna bridge
----
+
 # 🎯 Decisões Técnicas e Desafios Superados
 
 Bypass de Proteção Anti-Bot: Requisições HTTP convencionais (`requests`/`httpx`) eram bloqueadas pelo Mercado Livre com redirecionamentos para verificações de login (`/gz/account-verification`). A solução adotada foi o Playwright com contexto de navegador persistente (`config/ml_session`), simulando comportamento e resolução de usuário desktop real.
 Filtro Anti-Armadilha de Parcelamento: No DOM do Mercado Livre, parcelas (ex: "em 12x de R$ 749") compartilham as mesmas classes CSS do preço total à vista. O extrator desconstrói os blocos de parcelamento antes de capturar o valor promocional e valida o desconto através da badge oficial de percentual (`.andes-money-amount__discount`).
 Despacho Intercalado (Round-Robin): Em vez de descarregar lotes massivos em um único grupo, o orquestrador distribui uma oferta por nicho com intervalos de ~10 segundos, prevenindo penalizações do WhatsApp e garantindo engajamento dos membros.
 Persistência de Dados e Deduplicação: A tabela `enviados` possui chave única composta e índice temporal, permitindo checagens de cooldown com custo computacional mínimo antes de iniciar a etapa pesada de link building.
----
+
 
 📁 Estrutura do Repositório
 ```text
