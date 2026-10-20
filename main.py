@@ -139,8 +139,8 @@ def executar_ciclo(
                 logger.info(f"[{nicho_nome}] Gerando link para: {p['nome'][:40]}...")
                 link_afiliado = affiliate.gerar_link_afiliado(p["link"])
 
-                msg_telegram = formatter.formatar_telegram(p, link_afiliado)
-                msg_whatsapp = formatter.formatar_whatsapp(p, link_afiliado)
+                msg_telegram = formatter.formatar_telegram(p, nicho, link_afiliado)
+                msg_whatsapp = formatter.formatar_whatsapp(p, nicho, link_afiliado)
 
                 enviou_em_algum = False
 

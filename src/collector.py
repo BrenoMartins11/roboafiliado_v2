@@ -112,9 +112,7 @@ class MercadoLivreCollector:
                 if tag_img:
                     img_url = tag_img.get("data-src") or tag_img.get("src") or tag_img.get("srcset", "").split(" ")[0]
 
-                # ============================================================
-                #  EXTRAÇÃO PRECISA DE PREÇOS E DESCONTO OFICIAL
-                # ============================================================
+                # 1. Desconto Oficial da Badge
                 desconto_oficial = 0
                 tag_desc = card.select_one(".andes-money-amount__discount, .ui-search-price__discount, .poly-price__discount, [class*='discount']")
                 if tag_desc:
@@ -124,6 +122,15 @@ class MercadoLivreCollector:
                         if desc_match:
                             desconto_oficial = int(desc_match.group(0))
 
+                # 2. CAPTURA O CUPOM NATIVO DO CARD (Antes de remover a tag)
+                cupom_nativo = None
+                tag_cupom = card.select_one(".poly-coupon, [class*='coupon']")
+                if tag_cupom:
+                    texto_c = tag_cupom.get_text(strip=True)
+                    if "cupom" in texto_c.lower() or "off" in texto_c.lower():
+                        cupom_nativo = texto_c
+
+                # 3. Limpeza do HTML para evitar pegar parcelas como preço
                 card_limpo = BeautifulSoup(str(card), "html.parser")
                 for tag_remover in card_limpo.select(".poly-price__installments, .ui-search-item__installments, [class*='installment'], .poly-coupon"):
                     tag_remover.decompose()
@@ -189,6 +196,7 @@ class MercadoLivreCollector:
                     "avaliacao":        aval_nota,
                     "total_avaliacoes": 50,
                     "categoria":        categoria_id,
+                    "cupom_nativo":     cupom_nativo,  # <--- CAMPO ADICIONADO AQUI
                 })
             except Exception:
                 continue

@@ -7,46 +7,53 @@ mercadolivre:
   affiliate_tag: "brunotsousa"  # Sua tag/nickname de afiliado
 
 # ============================================================
-#  5 NICHOS ESPECÍFICOS -> GRUPOS NO TELEGRAM & WHATSAPP
+#  NICHOS ESPECÍFICOS -> GRUPOS NO TELEGRAM & WHATSAPP
 # ============================================================
 
-# Nicho de Fitness, Treino & Suplementação
 nichos:
+  # Nicho 1: Fitness, Treino & Suplementação
   - id: "fitness"
     nome: "Mundo Fitness & Treino"
     categoria_id: "MLB1276"
-    telegram_chat_id: "-1003913596243" #ofertas Breno
-    whatsapp_group_id: "120363411874042187@g.us" # Ofertas Tech (nome do grupo no whatssapp)
+    telegram_chat_id: "-1003913596243"
+    whatsapp_group_id: "120363411874042187@g.us"
     filtros:
       preco_minimo: 25.00
       desconto_minimo: 20
+    cupons:
+      - codigo: "FITNESS10"
+        tipo: "percent"       # 'percent' para % ou 'fixed' para valor em reais
+        valor: 10             # 10% OFF
+        preco_minimo: 80.00   # Só aplica se custar R$ 80 ou mais
 
-
-# Nicho 2: Vestuário & Calçados
+  # Nicho 2: Vestuário & Calçados
   - id: "vestuario"
     nome: "Moda, Roupas & Calçados"
     categoria_id: "MLB1430"
-    telegram_chat_id: "-1003999977018"        # Preencha com seu grupo de "promocoes tech"
+    telegram_chat_id: "-1003999977018"
     whatsapp_group_id: "120363426551167531@g.us"
     filtros:
       preco_minimo: 30.00
       desconto_minimo: 20
+    cupons:
+      - codigo: "MODA20"
+        tipo: "fixed"         # Desconto fixo em R$
+        valor: 20.00          # R$ 20 OFF
+        preco_minimo: 150.00  # Só aplica se custar R$ 150 ou mais
 
   # Nicho 3: Ferramentas & Oficina
   - id: "ferramentas"
     nome: "Ferramentas & Garagem"
     categoria_id: "MLB1500"
-    telegram_chat_id: "-1004448289947"        # Preencha com seu grupo de ferramentas
+    telegram_chat_id: "-1004448289947"
     whatsapp_group_id: "120363412799370735@g.us"
     filtros:
       preco_minimo: 35.00
       desconto_minimo: 15
+    cupons: []                # Deixe vazio [] quando não houver cupom ativo no nicho
 
 # ============================================================
 #  FILTROS GERAIS (Fallback se não definido no nicho)
-# ============================================================
-# ============================================================
-#  FILTROS GERAIS
 # ============================================================
 filtros_gerais:
   preco_minimo: 25.00
@@ -61,18 +68,18 @@ filtros_gerais:
     - "seminovo"
     - "recondicionado"
     - "defeito"
-  limite_produtos_por_nicho: 10       # <-- Aumenta de 3 para 8 produtos por lote
+  limite_produtos_por_nicho: 10
 
 # ============================================================
 #  AGENDAMENTO DA FILA
 # ============================================================
 agendamento:
-  intervalo_minutos: 25              # <-- Descanso de 25 min após terminar a fila para buscar novas ofertas
+  intervalo_minutos: 25
   variacao_minutos: 5
   horario_inicio: "08:00"
   horario_fim: "22:00"
-  intervalo_entre_mensagens_seg: 10  # <-- Posta 1 produto a cada ~60 segundos (1 minuto)
-  intervalo_entre_nichos_seg: 10     # <-- Intervalo entre os nichos (30 segundos)
+  intervalo_entre_mensagens_seg: 10
+  intervalo_entre_nichos_seg: 10
 
 # ============================================================
 #  TEMPLATES DE MENSAGEM
@@ -82,7 +89,7 @@ mensagem:
     🔥 *{nome}*
 
     💰 De: ~R$ {preco_original}~
-    💥 *Por: R$ {preco}* ({desconto}% OFF)
+    💥 *Por: R$ {preco}* ({desconto}% OFF){cupom}
     {frete_gratis}
     ⭐ {avaliacao} ({total_avaliacoes} avaliações)
 
@@ -93,7 +100,7 @@ mensagem:
     🔥 *{nome}*
 
     💰 De: ~R$ {preco_original}~
-    💥 *Por: R$ {preco}* ({desconto}% OFF)
+    💥 *Por: R$ {preco}* ({desconto}% OFF){cupom}
     {frete_gratis}
     ⭐ {avaliacao} ({total_avaliacoes} avaliações)
 
